@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -11,17 +12,27 @@ struct Metadata {
 }
 
 fn open_input_file(file_name: &str) -> File {
-    return File::open(&Path::new(file_name)).unwrap();
+    File::open(&Path::new(file_name)).unwrap()
 }
 
-fn metadata_from_file(file: &File) -> Metadata {
+fn ids_from_file(file: &File) -> Vec<String> {
     let mut reader = BufReader::new(file);
     let mut buffer = String::new();
-    let mut metadata = Metadata { two_letter_count: 0, three_letter_count: 0 };
+    let mut ids = Vec::new();
 
     while reader.read_line(&mut buffer).unwrap_or_default() > 0 {
-        let trimmed_line = buffer.trim();
-        let char_freqs = trimmed_line.chars().fold(
+        ids.push(buffer.trim().to_string());
+        buffer.clear();
+    }
+
+    ids
+}
+
+fn metadata_from_file(ids: &Vec<String>) -> Metadata {
+    let mut metadata = Metadata { two_letter_count: 0, three_letter_count: 0 };
+
+    for id in ids {
+        let char_freqs = id.chars().fold(
             HashMap::new(), |mut m, c| {
                 *m.entry(c).or_insert(0) += 1;
                 m
@@ -36,17 +47,43 @@ fn metadata_from_file(file: &File) -> Metadata {
             }
         }
         if counts_for_two {
-            //println!("{} counts for two", trimmed_line);
             metadata.two_letter_count += 1;
         }
         if counts_for_three {
-            //println!("{} counts for three", trimmed_line);
             metadata.three_letter_count += 1;
         }
-        buffer.clear();
     }
 
-    return metadata;
+    metadata
+}
+
+fn splice_index(id: &str, idx: usize) -> String {
+    id.chars()
+      .take(idx)
+      .chain(
+        id.chars()
+          .skip(idx + 1))
+      .collect()
+}
+
+fn common_letters_for_close_boxes(ids: &Vec<String>) -> Option<String> {
+    // Assume that all ids are the same length.
+    // Starting with index 0, remove a letter, then check for duplicates.
+    // The duplicate entry (if found) is the set of common letters.
+
+    let max_index = ids[0].len() - 1;
+    for n in 0..=max_index {
+        let spliced_ids = ids.iter().map(|id| splice_index(id, n));
+        let mut spliced_id_set = HashSet::new();
+        for id in spliced_ids {
+            if spliced_id_set.contains(&id) {
+                return Some(id.to_string());
+            }
+            spliced_id_set.insert(id);
+        }
+    }
+
+    None
 }
 
 fn checksum(m: &Metadata) -> u64 {
@@ -55,8 +92,10 @@ fn checksum(m: &Metadata) -> u64 {
 
 fn main() {
     let file_name = args().nth(1).unwrap();
-    let metadata = metadata_from_file(&open_input_file(&file_name));
+    let ids = ids_from_file(&open_input_file(&file_name));
+    let metadata = metadata_from_file(&ids);
     println!("Count of twos: {}", metadata.two_letter_count);
     println!("Count of threes: {}", metadata.three_letter_count);
     println!("Checksum: {}", checksum(&metadata));
+    println!("Common letters of correct box IDs: {}", common_letters_for_close_boxes(&ids).unwrap());
 }
