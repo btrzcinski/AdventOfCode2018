@@ -1,13 +1,14 @@
 #[macro_use] extern crate text_io;
 
 //use std::collections::HashMap;
-//use std::collections::HashSet;
+use std::collections::HashSet;
 use std::default::Default;
 use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::iter;
+use std::iter::FromIterator;
 use std::path::Path;
 use std::env::args;
 
@@ -85,11 +86,28 @@ fn overlapping_square_inches(claim_map: &ClaimMap) -> usize {
     claim_map.iter().flatten().filter(|cell| cell.len() > 1).map(|_| 1).sum()
 }
 
+fn non_overlapping_claim(max_claim_id: ClaimId, claim_map: &ClaimMap) -> Option<ClaimId> {
+    let mut non_overlapping_claims: HashSet<ClaimId> =
+        HashSet::from_iter(1..=max_claim_id);
+
+    for overlapping_id in claim_map.iter().flatten()
+                                   .filter(|cell| cell.len() > 1).flatten() {
+        non_overlapping_claims.remove(overlapping_id);
+    } 
+    
+    non_overlapping_claims.into_iter().nth(0)
+}
+
 fn main() {
     let file_name = args().nth(1).unwrap();
     let claims = claims_from_file(&open_input_file(&file_name));
     let claim_map = claim_map_from_claims(&claims);
     println!("First claim: {}", claims.first().unwrap());
     println!("0,862 in claim map: {:?}", claim_map[0][862]);
-    println!("Overlapping square inches: {}", overlapping_square_inches(&claim_map));
+    println!("Overlapping square inches: {}",
+             overlapping_square_inches(&claim_map));
+
+    let max_claim_id = claims.iter().map(|c| c.id).max().unwrap();
+    println!("Non-overlapping claim: {}",
+             non_overlapping_claim(max_claim_id, &claim_map).unwrap());
 }
