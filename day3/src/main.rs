@@ -89,12 +89,9 @@ fn overlapping_square_inches(claim_map: &ClaimMap) -> usize {
 fn non_overlapping_claim(max_claim_id: ClaimId, claim_map: &ClaimMap) -> Option<ClaimId> {
     let mut non_overlapping_claims: HashSet<ClaimId> =
         HashSet::from_iter(1..=max_claim_id);
-
-    for overlapping_id in claim_map.iter().flatten()
-                                   .filter(|cell| cell.len() > 1).flatten() {
-        non_overlapping_claims.remove(overlapping_id);
-    } 
-    
+    claim_map.iter().flatten()
+             .filter(|cell| cell.len() > 1).flatten()
+             .for_each(|id| { non_overlapping_claims.remove(id); });
     non_overlapping_claims.into_iter().nth(0)
 }
 
