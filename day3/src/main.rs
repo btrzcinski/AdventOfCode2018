@@ -1,6 +1,5 @@
 #[macro_use] extern crate text_io;
 
-//use std::collections::HashMap;
 use std::collections::HashSet;
 use std::default::Default;
 use std::fmt;
@@ -86,7 +85,8 @@ fn overlapping_square_inches(claim_map: &ClaimMap) -> usize {
     claim_map.iter().flatten().filter(|cell| cell.len() > 1).map(|_| 1).sum()
 }
 
-fn non_overlapping_claim(max_claim_id: ClaimId, claim_map: &ClaimMap) -> Option<ClaimId> {
+fn non_overlapping_claim(max_claim_id: ClaimId, claim_map: &ClaimMap)
+    -> Option<ClaimId> {
     let mut non_overlapping_claims: HashSet<ClaimId> =
         HashSet::from_iter(1..=max_claim_id);
     claim_map.iter().flatten()
