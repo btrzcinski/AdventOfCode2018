@@ -6,8 +6,6 @@ use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::iter;
-use std::iter::FromIterator;
 use std::path::Path;
 use std::env::args;
 
@@ -144,7 +142,7 @@ fn strategy_two(guard_stats: &HashMap<GuardId, GuardStats>) {
             let (min, freq) = v.sleep_minute_frequency.iter().enumerate().max_by_key(|&(_i, f)| f).unwrap();
             (k, min, freq)
         })
-        .max_by_key(|&(id, min, freq)| freq)
+        .max_by_key(|&(_id, _min, freq)| freq)
         .unwrap();
     println!("Guard ID #{} spent minute {} asleep the most overall: {} times",
              guard, min, freq);
